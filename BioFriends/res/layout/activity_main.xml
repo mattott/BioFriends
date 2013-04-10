@@ -9,11 +9,6 @@
     android:orientation="vertical"
     tools:context=".MainActivity" >
 
-    <EditText
-        android:id="@+id/search_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/search_hint" />
     <android.support.v4.app.ViewPager
         android:id="@+id/bio_pager"
         android:layout_width="match_parent"

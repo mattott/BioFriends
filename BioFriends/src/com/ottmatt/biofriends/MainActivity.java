@@ -1,70 +1,113 @@
 package com.ottmatt.biofriends;
 
-import roboguice.activity.RoboActivity;
+import roboguice.activity.RoboFragmentActivity;
 import roboguice.inject.InjectView;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.view.PagerAdapter;
+import android.provider.ContactsContract;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
 
-public class MainActivity extends RoboActivity {
-	@InjectView(R.id.search_bar) EditText searchBar;
-	@InjectView(R.id.bio_pager) ViewPager bioPager;
-	
+public class MainActivity extends RoboFragmentActivity implements
+		LoaderManager.LoaderCallbacks<Cursor> {
+	@InjectView(R.id.bio_pager)
+	ViewPager bioPager;
+
+	BioFragmentAdapter mBioFragmentAdapter;
+	Cursor mCursor;
+
 	private static final String STATE_CURRENT_VIEW = "state-current-view";
-	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+		mBioFragmentAdapter = new BioFragmentAdapter(
+				getSupportFragmentManager(), mCursor);
 		if (bioPager != null) {
-			bioPager.setAdapter(new BioAdapter(bioPager));
-			bioPager.setCurrentItem(savedInstanceState == null ? 0: savedInstanceState.getInt(STATE_CURRENT_VIEW, 0));
+			bioPager.setAdapter(mBioFragmentAdapter);
+			bioPager.setCurrentItem(savedInstanceState == null ? 0
+					: savedInstanceState.getInt(STATE_CURRENT_VIEW, 0));
 		}
-		
+
+		getSupportLoaderManager().initLoader(0, null, this);
 	}
-	
-	class BioAdapter extends PagerAdapter {
-		private View mBioPager;
-		
-		public BioAdapter(ViewPager parent) {
-			final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-			final View bioPager = inflater.inflate(R.id.bio_pager, parent, false);
-			mBioPager = bioPager;
-			
-			// this is where you retrieve the information from the contact
-			
+
+	// Instantiate and return a new loader for a given id
+	@Override
+	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+		Uri uri = ContactsContract.Contacts.CONTENT_URI;
+		String[] projection = new String[] {
+				ContactsContract.Contacts.DISPLAY_NAME,
+				ContactsContract.PhoneLookup.DISPLAY_NAME,
+				ContactsContract.PhoneLookup.NUMBER };
+		String selection = "((" + ContactsContract.Contacts.DISPLAY_NAME
+				+ " NOT NULL) AND ("
+				+ ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1) AND ("
+				+ ContactsContract.Contacts.DISPLAY_NAME + " != '' ) and ("
+				+ ContactsContract.Contacts.DISPLAY_NAME + " == "
+				+ ContactsContract.PhoneLookup.DISPLAY_NAME + "))";
+		String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
+				+ " COLLATE LOCALIZED ASC";
+		return new CursorLoader(this, uri, projection, selection, null,
+				sortOrder);
+	}
+
+	// Called when a previously created loader finishes its load
+	@Override
+	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+		mBioFragmentAdapter.swapCursor(data);
+		mCursor = data;
+		bioPager.setCurrentItem(0, false);
+	}
+
+	// Called when a previously created loader has been reset,
+	// thus making its data unavailable
+	@Override
+	public void onLoaderReset(Loader<Cursor> loader) {
+		mBioFragmentAdapter.swapCursor(null);
+	}
+
+	/**
+	 * 
+	 * @class retrieves fragments to be used inside the View Pager
+	 * 
+	 */
+	class BioFragmentAdapter extends FragmentStatePagerAdapter {
+		private Cursor mCursor;
+
+		public BioFragmentAdapter(FragmentManager fm, Cursor c) {
+			super(fm);
+			mCursor = c;
 		}
+
 		@Override
-		public Object instantiateItem(ViewGroup container, int position) {
-			final View page = mBioPager;
-			container.addView(page);
-			return page;
-		}
-		
-		@Override
-		public void destroyItem(ViewGroup container, int position, Object object) {
-			container.removeView((View) object);
-		}
-		
-		@Override
-		public boolean isViewFromObject(View view, Object object) {
-			return view == object;
+		public Fragment getItem(int position) {
+			position = position % mCursor.getCount();
+			mCursor.moveToPosition(position);
+			final int nameIndex = mCursor
+					.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+			final int numberIndex = mCursor
+					.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
+			final String name = mCursor.getString(nameIndex);
+			final String number = mCursor.getString(numberIndex);
+			return BioFragment.newInstance(name, number);
 		}
 
 		@Override
 		public int getCount() {
-			// TODO Auto-generated method stub
-			return 0;
+			return mCursor.getCount();
 		}
-		
-	}
-	
-	
 
+		public Cursor swapCursor(Cursor c) {
+			return mCursor = c;
+		}
+
+	}
 }
