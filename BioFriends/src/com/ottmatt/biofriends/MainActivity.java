@@ -13,9 +13,12 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
+import android.widget.TextView;
 
 public class MainActivity extends RoboFragmentActivity implements
 		LoaderManager.LoaderCallbacks<Cursor> {
+	@InjectView(R.id.test)
+	TextView textView;
 	@InjectView(R.id.bio_pager)
 	ViewPager bioPager;
 
@@ -28,15 +31,14 @@ public class MainActivity extends RoboFragmentActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		textView.setText("YES");
 		mBioFragmentAdapter = new BioFragmentAdapter(
 				getSupportFragmentManager(), mCursor);
 		if (bioPager != null) {
 			bioPager.setAdapter(mBioFragmentAdapter);
-			bioPager.setCurrentItem(savedInstanceState == null ? 0
-					: savedInstanceState.getInt(STATE_CURRENT_VIEW, 0));
 		}
-
 		getSupportLoaderManager().initLoader(0, null, this);
+
 	}
 
 	// Instantiate and return a new loader for a given id
@@ -44,15 +46,11 @@ public class MainActivity extends RoboFragmentActivity implements
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 		Uri uri = ContactsContract.Contacts.CONTENT_URI;
 		String[] projection = new String[] {
-				ContactsContract.Contacts.DISPLAY_NAME,
-				ContactsContract.PhoneLookup.DISPLAY_NAME,
-				ContactsContract.PhoneLookup.NUMBER };
+				ContactsContract.Contacts.DISPLAY_NAME};
 		String selection = "((" + ContactsContract.Contacts.DISPLAY_NAME
 				+ " NOT NULL) AND ("
 				+ ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1) AND ("
-				+ ContactsContract.Contacts.DISPLAY_NAME + " != '' ) and ("
-				+ ContactsContract.Contacts.DISPLAY_NAME + " == "
-				+ ContactsContract.PhoneLookup.DISPLAY_NAME + "))";
+				+ ContactsContract.Contacts.DISPLAY_NAME + " != '' ))";
 		String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
 				+ " COLLATE LOCALIZED ASC";
 		return new CursorLoader(this, uri, projection, selection, null,
@@ -79,7 +77,7 @@ public class MainActivity extends RoboFragmentActivity implements
 	 * @class retrieves fragments to be used inside the View Pager
 	 * 
 	 */
-	class BioFragmentAdapter extends FragmentStatePagerAdapter {
+	public static class BioFragmentAdapter extends FragmentStatePagerAdapter {
 		private Cursor mCursor;
 
 		public BioFragmentAdapter(FragmentManager fm, Cursor c) {
@@ -89,20 +87,22 @@ public class MainActivity extends RoboFragmentActivity implements
 
 		@Override
 		public Fragment getItem(int position) {
-			position = position % mCursor.getCount();
+			position = position % getCount();
 			mCursor.moveToPosition(position);
 			final int nameIndex = mCursor
 					.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
-			final int numberIndex = mCursor
-					.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
+			// final int numberIndex = mCursor.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
 			final String name = mCursor.getString(nameIndex);
-			final String number = mCursor.getString(numberIndex);
+			final String number = "408-306-4285";//mCursor.getString(numberIndex);
 			return BioFragment.newInstance(name, number);
 		}
 
 		@Override
 		public int getCount() {
-			return mCursor.getCount();
+			if (mCursor != null)
+				return mCursor.getCount();
+			else
+				return 0;
 		}
 
 		public Cursor swapCursor(Cursor c) {
