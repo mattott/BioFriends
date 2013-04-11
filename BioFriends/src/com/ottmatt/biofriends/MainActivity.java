@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -23,9 +25,7 @@ public class MainActivity extends RoboFragmentActivity implements
 	ViewPager bioPager;
 
 	BioFragmentAdapter mBioFragmentAdapter;
-	Cursor mCursor;
-
-	private static final String STATE_CURRENT_VIEW = "state-current-view";
+	Cursor mContactsCursor;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,7 @@ public class MainActivity extends RoboFragmentActivity implements
 		setContentView(R.layout.activity_main);
 		textView.setText("YES");
 		mBioFragmentAdapter = new BioFragmentAdapter(
-				getSupportFragmentManager(), mCursor);
+				getSupportFragmentManager(), mContactsCursor);
 		if (bioPager != null) {
 			bioPager.setAdapter(mBioFragmentAdapter);
 		}
@@ -44,24 +44,32 @@ public class MainActivity extends RoboFragmentActivity implements
 	// Instantiate and return a new loader for a given id
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-		Uri uri = ContactsContract.Contacts.CONTENT_URI;
-		String[] projection = new String[] {
-				ContactsContract.Contacts.DISPLAY_NAME};
-		String selection = "((" + ContactsContract.Contacts.DISPLAY_NAME
+		Uri uri;
+		String[] projection, selectionArgs;
+		String selection, sortOrder;
+
+		uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+		projection = new String[] { Photo.PHOTO, Phone.DISPLAY_NAME,
+				Phone.NUMBER };
+		selection = "((" + ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
 				+ " NOT NULL) AND ("
-				+ ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1) AND ("
-				+ ContactsContract.Contacts.DISPLAY_NAME + " != '' ))";
-		String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
+				+ ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER
+				+ "=1) AND ("
+				+ ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
+				+ " != '' ))";
+		selectionArgs = null;
+		sortOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
 				+ " COLLATE LOCALIZED ASC";
-		return new CursorLoader(this, uri, projection, selection, null,
-				sortOrder);
+
+		return new CursorLoader(this, uri, projection, selection,
+				selectionArgs, sortOrder);
 	}
 
 	// Called when a previously created loader finishes its load
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
 		mBioFragmentAdapter.swapCursor(data);
-		mCursor = data;
+		mContactsCursor = data;
 		bioPager.setCurrentItem(0, false);
 	}
 
@@ -77,24 +85,25 @@ public class MainActivity extends RoboFragmentActivity implements
 	 * @class retrieves fragments to be used inside the View Pager
 	 * 
 	 */
-	public static class BioFragmentAdapter extends FragmentStatePagerAdapter {
+	class BioFragmentAdapter extends FragmentStatePagerAdapter {
 		private Cursor mCursor;
 
-		public BioFragmentAdapter(FragmentManager fm, Cursor c) {
+		public BioFragmentAdapter(FragmentManager fm, Cursor contactsCursor) {
 			super(fm);
-			mCursor = c;
+			mCursor = contactsCursor;
 		}
 
 		@Override
 		public Fragment getItem(int position) {
 			position = position % getCount();
 			mCursor.moveToPosition(position);
-			final int nameIndex = mCursor
-					.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
-			// final int numberIndex = mCursor.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
+			final int photoIndex = mCursor.getColumnIndex(Photo.PHOTO);
+			final int nameIndex = mCursor.getColumnIndex(Phone.DISPLAY_NAME);
+			final int numberIndex = mCursor.getColumnIndex(Phone.NUMBER);
+			final String photo = mCursor.getString(photoIndex);
 			final String name = mCursor.getString(nameIndex);
-			final String number = "408-306-4285";//mCursor.getString(numberIndex);
-			return BioFragment.newInstance(name, number);
+			final String number = mCursor.getString(numberIndex);
+			return BioFragment.newInstance(photo, name, number);
 		}
 
 		@Override
