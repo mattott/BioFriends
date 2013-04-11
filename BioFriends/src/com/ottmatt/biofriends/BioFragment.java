@@ -1,20 +1,23 @@
 package com.ottmatt.biofriends;
 
 import roboguice.fragment.RoboFragment;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 public class BioFragment extends RoboFragment {
 
-	public static BioFragment newInstance(String photo, String name,
+	public static BioFragment newInstance(byte[] photoBlob, String name,
 			String details) {
 		BioFragment f = new BioFragment();
 
 		Bundle args = new Bundle();
-		args.putString("photo", photo);
+		args.putByteArray("photoBlob", photoBlob);
 		args.putString("name", name);
 		args.putString("details", details);
 		f.setArguments(args);
@@ -30,8 +33,16 @@ public class BioFragment extends RoboFragment {
 		return getArguments().getString("details");
 	}
 
-	public String getShownPhoto() {
-		return getArguments().getString("photo");
+	public Bitmap getShownPhoto() {
+		byte[] photoBlob = getArguments().getByteArray("photoBlob");
+
+		Bitmap decodedPhoto;
+		if (photoBlob != null)
+			decodedPhoto = BitmapFactory.decodeByteArray(photoBlob, 0,
+					photoBlob.length);
+		else
+			decodedPhoto = null;
+		return decodedPhoto;
 	}
 
 	@Override
@@ -46,6 +57,8 @@ public class BioFragment extends RoboFragment {
 		// inflate the layout for this fragment
 		final ViewGroup rootView = (ViewGroup) inflater.inflate(
 				R.layout.bio_pager_fragment, container, false);
+		((QuickContactBadge) rootView.findViewById(R.id.photo))
+				.setImageBitmap(getShownPhoto());
 		((TextView) rootView.findViewById(R.id.name)).setText(getShownName());
 		((TextView) rootView.findViewById(R.id.details))
 				.setText(getShownDetails());

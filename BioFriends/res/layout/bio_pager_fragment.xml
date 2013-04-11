@@ -4,17 +4,24 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <TextView 
+    <QuickContactBadge
+        android:id="@+id/photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/photo_description" />
+
+    <TextView
         android:id="@+id/name"
+        style="@style/BioHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textIsSelectable="false"
-        style="@style/BioHeader"/>
+        android:textIsSelectable="false" />
+
     <TextView
         android:id="@+id/details"
+        style="@style/BioDetails"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textIsSelectable="true"
-        style="@style/BioDetails"/>
+        android:textIsSelectable="true" />
 
 </LinearLayout>

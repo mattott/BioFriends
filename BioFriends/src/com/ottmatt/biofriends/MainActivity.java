@@ -2,12 +2,14 @@ package com.ottmatt.biofriends;
 
 import roboguice.activity.RoboFragmentActivity;
 import roboguice.inject.InjectView;
+import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
+import android.provider.ContactsContract.Data;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -15,12 +17,12 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
-import android.widget.TextView;
+import android.widget.EditText;
 
 public class MainActivity extends RoboFragmentActivity implements
 		LoaderManager.LoaderCallbacks<Cursor> {
-	@InjectView(R.id.test)
-	TextView textView;
+	@InjectView(R.id.search)
+	EditText searchView;
 	@InjectView(R.id.bio_pager)
 	ViewPager bioPager;
 
@@ -31,7 +33,6 @@ public class MainActivity extends RoboFragmentActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		textView.setText("YES");
 		mBioFragmentAdapter = new BioFragmentAdapter(
 				getSupportFragmentManager(), mContactsCursor);
 		if (bioPager != null) {
@@ -49,7 +50,7 @@ public class MainActivity extends RoboFragmentActivity implements
 		String selection, sortOrder;
 
 		uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-		projection = new String[] { Photo.PHOTO, Phone.DISPLAY_NAME,
+		projection = new String[] { Phone.PHOTO_ID, Phone.DISPLAY_NAME,
 				Phone.NUMBER };
 		selection = "((" + ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
 				+ " NOT NULL) AND ("
@@ -87,6 +88,7 @@ public class MainActivity extends RoboFragmentActivity implements
 	 */
 	class BioFragmentAdapter extends FragmentStatePagerAdapter {
 		private Cursor mCursor;
+		private int photoId;
 
 		public BioFragmentAdapter(FragmentManager fm, Cursor contactsCursor) {
 			super(fm);
@@ -97,13 +99,29 @@ public class MainActivity extends RoboFragmentActivity implements
 		public Fragment getItem(int position) {
 			position = position % getCount();
 			mCursor.moveToPosition(position);
-			final int photoIndex = mCursor.getColumnIndex(Photo.PHOTO);
+			final int photoIndex = mCursor.getColumnIndex(Phone.PHOTO_ID);
 			final int nameIndex = mCursor.getColumnIndex(Phone.DISPLAY_NAME);
 			final int numberIndex = mCursor.getColumnIndex(Phone.NUMBER);
-			final String photo = mCursor.getString(photoIndex);
 			final String name = mCursor.getString(nameIndex);
-			final String number = mCursor.getString(numberIndex);
-			return BioFragment.newInstance(photo, name, number);
+			final String phoneNumber = mCursor.getString(numberIndex);
+			photoId = mCursor.getInt(photoIndex);
+			return BioFragment.newInstance(getPhotoBlob(), name, phoneNumber);
+		}
+
+		public byte[] getPhotoBlob() {
+			final Uri uri = ContentUris.withAppendedId(Data.CONTENT_URI,
+					photoId);
+			final Cursor c = getContentResolver().query(uri,
+					new String[] { Photo.PHOTO }, null, null, null);
+			try {
+				byte[] photoBlob = null;
+				if (c.moveToFirst()) {
+					photoBlob = c.getBlob(0);
+				}
+				return photoBlob;
+			} finally {
+				c.close();
+			}
 		}
 
 		@Override
