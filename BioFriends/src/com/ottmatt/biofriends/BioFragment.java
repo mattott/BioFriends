@@ -7,17 +7,17 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.QuickContactBadge;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class BioFragment extends RoboFragment {
 
-	public static BioFragment newInstance(byte[] photoBlob, String name,
+	public static BioFragment newInstance(byte[] photo, String name,
 			String details) {
 		BioFragment f = new BioFragment();
 
 		Bundle args = new Bundle();
-		args.putByteArray("photoBlob", photoBlob);
+		args.putByteArray("photo", photo);
 		args.putString("name", name);
 		args.putString("details", details);
 		f.setArguments(args);
@@ -34,12 +34,14 @@ public class BioFragment extends RoboFragment {
 	}
 
 	public Bitmap getShownPhoto() {
-		byte[] photoBlob = getArguments().getByteArray("photoBlob");
+		byte[] photo = getArguments().getByteArray("photo");
 
-		Bitmap decodedPhoto;
-		if (photoBlob != null)
-			decodedPhoto = BitmapFactory.decodeByteArray(photoBlob, 0,
-					photoBlob.length);
+		Bitmap decodedPhoto = null;
+		if (photo != null) {
+			decodedPhoto = BitmapFactory
+					.decodeByteArray(photo, 0, photo.length);
+			decodedPhoto = Bitmap.createScaledBitmap(decodedPhoto, 400, 400, false);
+		}
 		else
 			decodedPhoto = null;
 		return decodedPhoto;
@@ -57,8 +59,9 @@ public class BioFragment extends RoboFragment {
 		// inflate the layout for this fragment
 		final ViewGroup rootView = (ViewGroup) inflater.inflate(
 				R.layout.bio_pager_fragment, container, false);
-		((QuickContactBadge) rootView.findViewById(R.id.photo))
-				.setImageBitmap(getShownPhoto());
+		ImageView imageView = ((ImageView) rootView.findViewById(R.id.photo));
+		imageView.setImageBitmap(getShownPhoto());
+
 		((TextView) rootView.findViewById(R.id.name)).setText(getShownName());
 		((TextView) rootView.findViewById(R.id.details))
 				.setText(getShownDetails());
