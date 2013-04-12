@@ -35,15 +35,9 @@ public class BioFragment extends RoboFragment {
 
 	public Bitmap getShownPhoto() {
 		byte[] photo = getArguments().getByteArray("photo");
-
-		Bitmap decodedPhoto = null;
-		if (photo != null) {
-			decodedPhoto = BitmapFactory
-					.decodeByteArray(photo, 0, photo.length);
-			decodedPhoto = Bitmap.createScaledBitmap(decodedPhoto, 400, 400, false);
-		}
-		else
-			decodedPhoto = null;
+		Bitmap decodedPhoto;
+		decodedPhoto = BitmapFactory.decodeByteArray(photo, 0, photo.length);
+		decodedPhoto = Bitmap.createScaledBitmap(decodedPhoto, 400, 400, false);
 		return decodedPhoto;
 	}
 
@@ -61,7 +55,6 @@ public class BioFragment extends RoboFragment {
 				R.layout.bio_pager_fragment, container, false);
 		ImageView imageView = ((ImageView) rootView.findViewById(R.id.photo));
 		imageView.setImageBitmap(getShownPhoto());
-
 		((TextView) rootView.findViewById(R.id.name)).setText(getShownName());
 		((TextView) rootView.findViewById(R.id.details))
 				.setText(getShownDetails());

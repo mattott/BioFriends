@@ -5,7 +5,6 @@ import roboguice.inject.InjectView;
 import android.app.SearchManager;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -41,10 +40,6 @@ public class MainActivity extends RoboFragmentActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		Intent intent = getIntent();
-		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-			mCurFilter = intent.getStringExtra(SearchManager.QUERY);
-		}
 		mBioFragmentAdapter = new BioFragmentAdapter(
 				getSupportFragmentManager(), mContactsCursor);
 		if (bioPager != null) {
@@ -92,8 +87,9 @@ public class MainActivity extends RoboFragmentActivity implements
 		String[] projection, selectionArgs;
 		String selection, sortOrder;
 		if (mCurFilter != null)
-			uri = Uri.withAppendedPath(Contacts.CONTENT_FILTER_URI, Uri.encode(mCurFilter));
-		else	
+			uri = Uri.withAppendedPath(Contacts.CONTENT_FILTER_URI,
+					Uri.encode(mCurFilter));
+		else
 			uri = Contacts.CONTENT_URI;
 		projection = new String[] { Contacts.PHOTO_ID, Contacts.DISPLAY_NAME,
 				Contacts._ID };
@@ -134,7 +130,8 @@ public class MainActivity extends RoboFragmentActivity implements
 			super(fm);
 			mCursor = contactsCursor;
 		}
-		
+
+		// called when the cursor is changed
 		@Override
 		public int getItemPosition(Object object) {
 			return POSITION_NONE;
@@ -201,10 +198,7 @@ public class MainActivity extends RoboFragmentActivity implements
 
 		@Override
 		public int getCount() {
-			if (mCursor != null)
-				return mCursor.getCount();
-			else
-				return 0;
+			return mCursor != null ? mCursor.getCount() : 0;
 		}
 
 		public Cursor swapCursor(Cursor c) {
