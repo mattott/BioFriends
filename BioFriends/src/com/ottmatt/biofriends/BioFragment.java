@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class BioFragment extends RoboFragment {
-
 	public static BioFragment newInstance(byte[] photo, String name,
 			String details) {
 		BioFragment f = new BioFragment();
@@ -34,11 +33,9 @@ public class BioFragment extends RoboFragment {
 	}
 
 	public Bitmap getShownPhoto() {
-		byte[] photo = getArguments().getByteArray("photo");
-		Bitmap decodedPhoto;
-		decodedPhoto = BitmapFactory.decodeByteArray(photo, 0, photo.length);
-		decodedPhoto = Bitmap.createScaledBitmap(decodedPhoto, 400, 400, false);
-		return decodedPhoto;
+		return BitmapFactory.decodeByteArray(
+				getArguments().getByteArray("photo"), 0, getArguments()
+						.getByteArray("photo").length);
 	}
 
 	@Override
@@ -53,8 +50,8 @@ public class BioFragment extends RoboFragment {
 		// inflate the layout for this fragment
 		final ViewGroup rootView = (ViewGroup) inflater.inflate(
 				R.layout.bio_pager_fragment, container, false);
-		ImageView imageView = ((ImageView) rootView.findViewById(R.id.photo));
-		imageView.setImageBitmap(getShownPhoto());
+		((ImageView) rootView.findViewById(R.id.photo))
+				.setImageBitmap(getShownPhoto());
 		((TextView) rootView.findViewById(R.id.name)).setText(getShownName());
 		((TextView) rootView.findViewById(R.id.details))
 				.setText(getShownDetails());

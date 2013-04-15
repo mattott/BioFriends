@@ -108,6 +108,7 @@ public class MainActivity extends RoboFragmentActivity implements
 	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
 		mBioFragmentAdapter.swapCursor(data);
 		mContactsCursor = data;
+		bioPager.getAdapter().notifyDataSetChanged();
 		bioPager.setCurrentItem(0, false);
 	}
 
@@ -140,7 +141,10 @@ public class MainActivity extends RoboFragmentActivity implements
 		@Override
 		public Fragment getItem(int position) {
 			position = position % getCount();
-			mCursor.moveToPosition(position);
+			if (mCursor == null)
+				mCursor.moveToFirst();
+			else
+				mCursor.moveToPosition(position);
 			final int photoIndex = mCursor.getColumnIndex(Contacts.PHOTO_ID);
 			final int nameIndex = mCursor.getColumnIndex(Contacts.DISPLAY_NAME);
 			final int contactIndex = mCursor.getColumnIndex(Contacts._ID);
@@ -187,22 +191,12 @@ public class MainActivity extends RoboFragmentActivity implements
 			}
 		}
 
-		/**
-		 * public byte[] getPhotoStream() { Uri displayPhotoUri =
-		 * ContentUris.withAppendedId( DisplayPhoto.CONTENT_URI, photoId); try {
-		 * AssetFileDescriptor fd = getContentResolver()
-		 * .openAssetFileDescriptor(displayPhotoUri, "r"); InputStream inStream
-		 * = fd.createInputStream(); return IOUtils.toByteArray(inStream); }
-		 * catch (IOException e) { return null; } }
-		 **/
-
 		@Override
 		public int getCount() {
 			return mCursor != null ? mCursor.getCount() : 0;
 		}
 
 		public Cursor swapCursor(Cursor c) {
-			notifyDataSetChanged();
 			return mCursor = c;
 		}
 
